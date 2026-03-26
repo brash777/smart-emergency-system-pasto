@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Emergencias - Pasto</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #0a0a0a; color: #fff; min-height: 100vh; }
+        header { background: linear-gradient(135deg, #c0392b, #e74c3c); padding: 15px 30px; display: flex; align-items: center; gap: 15px; box-shadow: 0 4px 20px rgba(231,76,60,0.4); }
+        header h1 { font-size: 1.4rem; }
+        header span { font-size: 0.85rem; opacity: 0.85; }
+        .badge { background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; margin-left: auto; }
+        .container { max-width: 900px; margin: 40px auto; padding: 0 20px; }
+        .hero { text-align: center; margin-bottom: 40px; }
+        .hero h2 { font-size: 2rem; margin-bottom: 10px; background: linear-gradient(135deg, #e74c3c, #f39c12); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .hero p { color: #888; font-size: 1rem; }
+        .card { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 16px; padding: 30px; margin-bottom: 20px; }
+        .card h3 { font-size: 1.1rem; margin-bottom: 20px; color: #e74c3c; display: flex; align-items: center; gap: 8px; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; color: #aaa; font-size: 0.9rem; }
+        input, textarea { width: 100%; background: #0a0a0a; border: 1px solid #333; border-radius: 10px; padding: 12px 16px; color: #fff; font-size: 0.95rem; transition: border-color 0.3s; }
+        input:focus, textarea:focus { outline: none; border-color: #e74c3c; }
+        textarea { resize: vertical; min-height: 100px; }
+        .upload-area { border: 2px dashed #333; border-radius: 12px; padding: 40px; text-align: center; cursor: pointer; transition: all 0.3s; position: relative; }
+        .upload-area:hover { border-color: #e74c3c; background: rgba(231,76,60,0.05); }
+        .upload-area.has-file { border-color: #27ae60; background: rgba(39,174,96,0.05); }
+        .upload-area input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+        .upload-icon { font-size: 2.5rem; margin-bottom: 10px; }
+        .upload-area p { color: #666; font-size: 0.9rem; }
+        .upload-area .filename { color: #27ae60; font-weight: bold; margin-top: 8px; }
+        .location-btn { background: #1a1a1a; border: 1px solid #333; border-radius: 10px; padding: 12px 20px; color: #fff; cursor: pointer; display: flex; align-items: center; gap: 10px; font-size: 0.9rem; transition: all 0.3s; width: 100%; justify-content: center; }
+        .location-btn:hover { border-color: #3498db; color: #3498db; }
+        .location-btn.active { border-color: #27ae60; color: #27ae60; background: rgba(39,174,96,0.1); }
+        .coords { margin-top: 10px; padding: 10px 15px; background: #0a0a0a; border-radius: 8px; font-size: 0.8rem; color: #666; display: none; }
+        .coords.show { display: block; color: #27ae60; }
+        .btn-submit { width: 100%; padding: 16px; background: linear-gradient(135deg, #c0392b, #e74c3c); border: none; border-radius: 12px; color: #fff; font-size: 1.1rem; font-weight: bold; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(231,76,60,0.4); }
+        .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .result { display: none; margin-top: 20px; padding: 20px; border-radius: 12px; text-align: center; }
+        .result.success { display: block; background: rgba(39,174,96,0.1); border: 1px solid #27ae60; }
+        .result.error { display: block; background: rgba(231,76,60,0.1); border: 1px solid #e74c3c; }
+        .result h3 { font-size: 1.3rem; margin-bottom: 10px; }
+        .service-badge { display: inline-block; padding: 8px 20px; border-radius: 20px; font-weight: bold; margin-top: 10px; font-size: 1rem; }
+        .POLICE { background: #2980b9; }
+        .AMBULANCE { background: #27ae60; }
+        .FIRE_DEPARTMENT { background: #e67e22; }
+        .MULTIPLE { background: #8e44ad; }
+        .spinner { width: 20px; height: 20px; border: 3px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.8s linear infinite; display: none; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .login-card { max-width: 400px; margin: 80px auto; }
+        .login-card h2 { text-align: center; margin-bottom: 25px; font-size: 1.5rem; }
+        .btn-login { width: 100%; padding: 14px; background: linear-gradient(135deg, #c0392b, #e74c3c); border: none; border-radius: 10px; color: #fff; font-size: 1rem; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .error-msg { color: #e74c3c; font-size: 0.85rem; margin-top: 10px; text-align: center; }
+    </style>
+</head>
+<body>
+
+<div id="loginSection">
+    <header>
+        <div>🚨</div>
+        <div><h1>Sistema de Emergencias</h1><span>Municipio de Pasto, Nariño</span></div>
+    </header>
+    <div class="container">
+        <div class="card login-card">
+            <h2>🔐 Iniciar Sesión</h2>
+            <div class="form-group">
+                <label>Correo electrónico</label>
+                <input type="email" id="loginEmail" placeholder="ciudadano@pasto.gov.co" value="ciudadano@pasto.gov.co">
+            </div>
+            <div class="form-group">
+                <label>Contraseña</label>
+                <input type="password" id="loginPassword" placeholder="123456" value="123456">
+            </div>
+            <button class="btn-login" onclick="login()">Ingresar</button>
+            <p class="error-msg" id="loginError"></p>
+        </div>
+    </div>
+</div>
+
+<div id="appSection" style="display:none">
+    <header>
+        <div>🚨</div>
+        <div><h1>Sistema de Emergencias</h1><span>Municipio de Pasto, Nariño</span></div>
+        <div class="badge" id="userBadge">👤 Ciudadano</div>
+        <button onclick="logout()" style="background:rgba(255,255,255,0.1);border:none;color:white;padding:8px 15px;border-radius:8px;cursor:pointer;margin-left:10px">Salir</button>
+    </header>
+    <div class="container">
+        <div class="hero">
+            <h2>Reportar Emergencia</h2>
+            <p>Sube una imagen y comparte tu ubicación para que el sistema identifique y asigne el servicio correcto</p>
+        </div>
+        <div class="card">
+            <h3>📸 Imagen de la emergencia</h3>
+            <div class="upload-area" id="uploadArea">
+                <input type="file" id="imageInput" accept="image/*" onchange="handleFile(this)">
+                <div class="upload-icon">📁</div>
+                <p>Haz clic o arrastra una imagen aquí</p>
+                <p style="font-size:0.75rem; color:#555; margin-top:5px">JPG, PNG, WEBP — máx 10MB</p>
+                <p class="filename" id="filename"></p>
+            </div>
+        </div>
+        <div class="card">
+            <h3>📍 Ubicación</h3>
+            <button class="location-btn" id="locationBtn" onclick="getLocation()">📍 Obtener mi ubicación actual</button>
+            <div class="coords" id="coords"></div>
+        </div>
+        <div class="card">
+            <h3>📝 Descripción (opcional)</h3>
+            <textarea id="description" placeholder="Describe brevemente lo que está pasando..."></textarea>
+        </div>
+        <button class="btn-submit" id="submitBtn" onclick="submitReport()">
+            <div class="spinner" id="spinner"></div>
+            <span id="submitText">🚨 Reportar Emergencia</span>
+        </button>
+        <div class="result" id="result"></div>
+    </div>
+</div>
+
+<script>
+    let authCredentials = '';
+    let userLat = null;
+    let userLng = null;
+
+    function login() {
+        const email = document.getElementById('loginEmail').value;
+        const password = document.getElementById('loginPassword').value;
+        if (!email || !password) {
+            document.getElementById('loginError').textContent = 'Completa todos los campos';
+            return;
+        }
+        authCredentials = btoa(email + ':' + password);
+        fetch('/api/v1/emergencies', {
+            headers: { 'Authorization': 'Basic ' + authCredentials }
+        })
+        .then(res => {
+            if (res.ok) {
+                document.getElementById('loginSection').style.display = 'none';
+                document.getElementById('appSection').style.display = 'block';
+                document.getElementById('userBadge').textContent = '👤 ' + email.split('@')[0];
+            } else {
+                document.getElementById('loginError').textContent = 'Credenciales incorrectas';
+            }
+        })
+        .catch(() => {
+            document.getElementById('loginError').textContent = 'Error conectando al servidor';
+        });
+    }
+
+    function logout() {
+        authCredentials = '';
+        document.getElementById('loginSection').style.display = 'block';
+        document.getElementById('appSection').style.display = 'none';
+    }
+
+    function handleFile(input) {
+        if (input.files && input.files[0]) {
+            document.getElementById('filename').textContent = '✅ ' + input.files[0].name;
+            document.getElementById('uploadArea').classList.add('has-file');
+        }
+    }
+
+    function getLocation() {
+        const btn = document.getElementById('locationBtn');
+        btn.textContent = '⏳ Obteniendo ubicación...';
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                userLat = pos.coords.latitude;
+                userLng = pos.coords.longitude;
+                btn.textContent = '✅ Ubicación obtenida';
+                btn.classList.add('active');
+                const coords = document.getElementById('coords');
+                coords.textContent = 'Lat: ' + userLat.toFixed(6) + ', Lng: ' + userLng.toFixed(6);
+                coords.classList.add('show');
+            },
+            () => {
+                userLat = 1.2136;
+                userLng = -77.2811;
+                btn.textContent = '📍 Ubicación de Pasto (por defecto)';
+                btn.classList.add('active');
+                const coords = document.getElementById('coords');
+                coords.textContent = 'Lat: ' + userLat + ' (Pasto, Nariño)';
+                coords.classList.add('show');
+            }
+        );
+    }
+
+    function submitReport() {
+        const image = document.getElementById('imageInput').files[0];
+        const description = document.getElementById('description').value;
+        if (!image) { alert('Por favor sube una imagen'); return; }
+        if (!userLat) { alert('Por favor obtén tu ubicación'); return; }
+
+        document.getElementById('spinner').style.display = 'block';
+        document.getElementById('submitText').textContent = 'Procesando...';
+        document.getElementById('submitBtn').disabled = true;
+
+        const formData = new FormData();
+        formData.append('image', image);
+        formData.append('data', new Blob([JSON.stringify({
+            latitude: userLat,
+            longitude: userLng,
+            description: description
+        })], { type: 'application/json' }));
+
+        fetch('/api/v1/reports', {
+            method: 'POST',
+            headers: { 'Authorization': 'Basic ' + authCredentials },
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => { showResult(data); })
+        .catch(() => { showError('Error al enviar el reporte. Intenta nuevamente.'); })
+        .finally(() => {
+            document.getElementById('spinner').style.display = 'none';
+            document.getElementById('submitText').textContent = '🚨 Reportar Emergencia';
+            document.getElementById('submitBtn').disabled = false;
+        });
+    }
+
+    function showResult(data) {
+        const result = document.getElementById('result');
+        const serviceNames = {
+            'POLICE': '🚔 Policia Nacional',
+            'AMBULANCE': '🚑 Ambulancia',
+            'FIRE_DEPARTMENT': '🚒 Bomberos',
+            'MULTIPLE': '🚔🚑 Policia + Ambulancia'
+        };
+        const typeNames = {
+            'FIRE': '🔥 Incendio',
+            'ACCIDENT': '🚗 Accidente',
+            'ROBBERY': '🦹 Robo',
+            'MEDICAL': '🏥 Emergencia Medica',
+            'OTHER': '⚠️ Otra emergencia'
+        };
+        const service = data.assignedService || 'POLICE';
+        const type = data.classification || 'OTHER';
+        result.className = 'result success';
+        result.innerHTML =
+            '<h3>✅ Emergencia Reportada</h3>' +
+            '<p style="color:#aaa; margin: 8px 0">' + (data.message || 'Tu reporte fue recibido exitosamente') + '</p>' +
+            '<p style="color:#aaa; margin: 8px 0">Tipo detectado: <strong style="color:white">' + (typeNames[type] || type) + '</strong></p>' +
+            '<span class="service-badge ' + service + '">' + (serviceNames[service] || service) + '</span>' +
+            '<p style="color:#555; font-size:0.8rem; margin-top:15px">Reporte #' + (data.id || '---') + ' - ' + new Date().toLocaleTimeString() + '</p>';
+    }
+
+    function showError(msg) {
+        const result = document.getElementById('result');
+        result.className = 'result error';
+        result.innerHTML = '<h3>❌ Error</h3><p>' + msg + '</p>';
+    }
+</script>
+</body>
+</html>

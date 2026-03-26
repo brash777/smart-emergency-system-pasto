@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Admin - Emergencias Pasto</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #0a0a0a; color: #fff; min-height: 100vh; }
+        header { background: linear-gradient(135deg, #1a1a2e, #16213e); padding: 15px 30px; display: flex; align-items: center; gap: 15px; border-bottom: 1px solid #e74c3c; }
+        header h1 { font-size: 1.4rem; }
+        header span { font-size: 0.85rem; opacity: 0.7; }
+        .badge-admin { background: #e74c3c; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; margin-left: auto; font-weight: bold; }
+        .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
+        .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 30px; }
+        .stat-card { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 12px; padding: 20px; text-align: center; }
+        .stat-card .number { font-size: 2rem; font-weight: bold; margin-bottom: 5px; }
+        .stat-card .label { color: #666; font-size: 0.85rem; }
+        .stat-card.total .number { color: #fff; }
+        .stat-card.fire .number { color: #e67e22; }
+        .stat-card.police .number { color: #3498db; }
+        .stat-card.medical .number { color: #27ae60; }
+        .table-card { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 16px; padding: 25px; }
+        .table-card h3 { margin-bottom: 20px; color: #e74c3c; display: flex; align-items: center; gap: 8px; }
+        .refresh-btn { margin-left: auto; background: #2a2a2a; border: 1px solid #333; color: #fff; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 0.85rem; }
+        .refresh-btn:hover { border-color: #e74c3c; }
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: 12px 15px; color: #666; font-size: 0.8rem; text-transform: uppercase; border-bottom: 1px solid #2a2a2a; }
+        td { padding: 14px 15px; border-bottom: 1px solid #1e1e1e; font-size: 0.9rem; vertical-align: middle; }
+        tr:hover td { background: #1e1e1e; }
+        .type-badge { padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; }
+        .type-FIRE { background: rgba(230,126,34,0.2); color: #e67e22; }
+        .type-ACCIDENT { background: rgba(231,76,60,0.2); color: #e74c3c; }
+        .type-ROBBERY { background: rgba(52,73,94,0.5); color: #95a5a6; }
+        .type-MEDICAL { background: rgba(39,174,96,0.2); color: #27ae60; }
+        .type-OTHER { background: rgba(127,140,141,0.2); color: #7f8c8d; }
+        .service-badge { padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; }
+        .svc-POLICE { background: rgba(52,152,219,0.2); color: #3498db; }
+        .svc-AMBULANCE { background: rgba(39,174,96,0.2); color: #27ae60; }
+        .svc-FIRE_DEPARTMENT { background: rgba(230,126,34,0.2); color: #e67e22; }
+        .svc-MULTIPLE { background: rgba(142,68,173,0.2); color: #9b59b6; }
+        .status-select { background: #0a0a0a; border: 1px solid #333; color: #fff; padding: 6px 10px; border-radius: 8px; font-size: 0.8rem; cursor: pointer; }
+        .empty { text-align: center; padding: 50px; color: #444; }
+        .empty .icon { font-size: 3rem; margin-bottom: 10px; }
+        .login-overlay { position: fixed; inset: 0; background: #0a0a0a; display: flex; align-items: center; justify-content: center; z-index: 100; }
+        .login-box { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 16px; padding: 40px; width: 380px; }
+        .login-box h2 { text-align: center; margin-bottom: 25px; }
+        .form-group { margin-bottom: 16px; }
+        label { display: block; margin-bottom: 6px; color: #aaa; font-size: 0.85rem; }
+        input { width: 100%; background: #0a0a0a; border: 1px solid #333; border-radius: 8px; padding: 11px 14px; color: #fff; font-size: 0.9rem; }
+        input:focus { outline: none; border-color: #e74c3c; }
+        .btn-login { width: 100%; padding: 13px; background: linear-gradient(135deg, #c0392b, #e74c3c); border: none; border-radius: 8px; color: #fff; font-weight: bold; cursor: pointer; margin-top: 8px; font-size: 1rem; }
+        .error-msg { color: #e74c3c; font-size: 0.83rem; margin-top: 8px; text-align: center; }
+        .confidence-bar { background: #2a2a2a; border-radius: 4px; height: 6px; width: 80px; overflow: hidden; display: inline-block; vertical-align: middle; margin-right: 6px; }
+        .confidence-fill { height: 100%; background: linear-gradient(90deg, #e74c3c, #f39c12); border-radius: 4px; }
+    </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-overlay" id="loginOverlay">
+    <div class="login-box">
+        <h2>🛡️ Panel Administrador</h2>
+        <div class="form-group">
+            <label>Correo</label>
+            <input type="email" id="adminEmail" value="admin@pasto.gov.co">
+        </div>
+        <div class="form-group">
+            <label>Contraseña</label>
+            <input type="password" id="adminPass" value="admin123">
+        </div>
+        <button class="btn-login" onclick="adminLogin()">Ingresar</button>
+        <p class="error-msg" id="loginError"></p>
+        <p style="color:#666;font-size:0.8rem;text-align:center;margin-top:15px">
+            <a href="/" style="color:#e74c3c;text-decoration:none">← Ir al portal ciudadano</a>
+        </p>
+    </div>
+</div>
+
+<!-- PANEL -->
+<div id="panel" style="display:none">
+    <header>
+        <div>🛡️</div>
+        <div>
+            <h1>Panel de Control — Emergencias</h1>
+            <span>Municipio de Pasto, Nariño</span>
+        </div>
+        <div class="badge-admin">ADMINISTRADOR</div>
+        <button onclick="adminLogout()" style="background:rgba(255,255,255,0.08);border:1px solid #333;color:white;padding:8px 15px;border-radius:8px;cursor:pointer;margin-left:15px;font-size:0.85rem">Salir</button>
+    </header>
+
+    <div class="container">
+        <div class="stats">
+            <div class="stat-card total">
+                <div class="number" id="statTotal">0</div>
+                <div class="label">Total Emergencias</div>
+            </div>
+            <div class="stat-card fire">
+                <div class="number" id="statFire">0</div>
+                <div class="label">🔥 Incendios</div>
+            </div>
+            <div class="stat-card police">
+                <div class="number" id="statPolice">0</div>
+                <div class="label">🦹 Robos</div>
+            </div>
+            <div class="stat-card medical">
+                <div class="number" id="statMedical">0</div>
+                <div class="label">🚑 Médicas</div>
+            </div>
+        </div>
+
+        <div class="table-card">
+            <h3>
+                🚨 Emergencias Registradas
+                <button class="refresh-btn" onclick="loadEmergencies()">🔄 Actualizar</button>
+                <a href="/" style="background:#2a2a2a;border:1px solid #333;color:#aaa;padding:8px 16px;border-radius:8px;font-size:0.85rem;text-decoration:none;margin-left:8px">Portal Ciudadano</a>
+            </h3>
+            <div id="tableContainer">
+                <div class="empty"><div class="icon">⏳</div><p>Cargando...</p></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let auth = '';
+
+    function adminLogin() {
+        const email = document.getElementById('adminEmail').value;
+        const pass = document.getElementById('adminPass').value;
+        auth = btoa(email + ':' + pass);
+
+        fetch('/api/v1/emergencies', {
+            headers: { 'Authorization': 'Basic ' + auth }
+        })
+        .then(res => {
+            if (res.ok) {
+                document.getElementById('loginOverlay').style.display = 'none';
+                document.getElementById('panel').style.display = 'block';
+                loadEmergencies();
+            } else {
+                document.getElementById('loginError').textContent = 'Credenciales incorrectas';
+            }
+        })
+        .catch(() => {
+            document.getElementById('loginError').textContent = 'Error conectando al servidor';
+        });
+    }
+
+    function adminLogout() {
+        auth = '';
+        document.getElementById('loginOverlay').style.display = 'flex';
+        document.getElementById('panel').style.display = 'none';
+    }
+
+    function loadEmergencies() {
+        fetch('/api/v1/emergencies', {
+            headers: { 'Authorization': 'Basic ' + auth }
+        })
+        .then(res => res.json())
+        .then(data => {
+            updateStats(data);
+            renderTable(data);
+        })
+        .catch(() => {
+            document.getElementById('tableContainer').innerHTML =
+                '<div class="empty"><div class="icon">❌</div><p>Error al cargar emergencias</p></div>';
+        });
+    }
+
+    function updateStats(data) {
+        document.getElementById('statTotal').textContent = data.length;
+        document.getElementById('statFire').textContent = data.filter(e => e.type === 'FIRE').length;
+        document.getElementById('statPolice').textContent = data.filter(e => e.type === 'ROBBERY').length;
+        document.getElementById('statMedical').textContent = data.filter(e => e.type === 'MEDICAL').length;
+    }
+
+    function renderTable(data) {
+        const container = document.getElementById('tableContainer');
+        if (data.length === 0) {
+            container.innerHTML = '<div class="empty"><div class="icon">📭</div><p>No hay emergencias registradas aún</p></div>';
+            return;
+        }
+
+        const typeLabels = {
+            FIRE: '🔥 Incendio', ACCIDENT: '🚗 Accidente',
+            ROBBERY: '🦹 Robo', MEDICAL: '🏥 Médica', OTHER: '⚠️ Otra'
+        };
+        const svcLabels = {
+            POLICE: '🚔 Policía', AMBULANCE: '🚑 Ambulancia',
+            FIRE_DEPARTMENT: '🚒 Bomberos', MULTIPLE: '🚔🚑 Múltiple'
+        };
+
+        const rows = data.map(e => {
+            const conf = e.report && e.report.aiConfidence ? Math.round(e.report.aiConfidence * 100) : 60;
+            const fecha = e.createdAt ? new Date(e.createdAt).toLocaleString('es-CO') : '—';
+            return `
+            <tr>
+                <td><strong>#${e.id}</strong></td>
+                <td><span class="type-badge type-${e.type || 'OTHER'}">${typeLabels[e.type] || '⚠️ Otra'}</span></td>
+                <td><span class="service-badge svc-${e.assignedService}">${svcLabels[e.assignedService] || e.assignedService}</span></td>
+                <td>
+                    <div class="confidence-bar">
+                        <div class="confidence-fill" style="width:${conf}%"></div>
+                    </div>
+                    <span style="font-size:0.8rem;color:#888">${conf}%</span>
+                </td>
+                <td style="color:#666;font-size:0.83rem">${fecha}</td>
+                <td>
+                    <select class="status-select" onchange="updateStatus(${e.id}, this.value)">
+                        <option value="CREATED" ${e.status==='CREATED'?'selected':''}>🟡 Creada</option>
+                        <option value="DISPATCHED" ${e.status==='DISPATCHED'?'selected':''}>🔵 Despachada</option>
+                        <option value="IN_PROGRESS" ${e.status==='IN_PROGRESS'?'selected':''}>🟠 En curso</option>
+                        <option value="RESOLVED" ${e.status==='RESOLVED'?'selected':''}>🟢 Resuelta</option>
+                        <option value="CANCELLED" ${e.status==='CANCELLED'?'selected':''}>⛔ Cancelada</option>
+                    </select>
+                </td>
+            </tr>`;
+        }).join('');
+
+        container.innerHTML = `
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Tipo</th>
+                        <th>Servicio Asignado</th>
+                        <th>Confianza IA</th>
+                        <th>Fecha</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+            </table>`;
+    }
+
+    function updateStatus(id, status) {
+        fetch('/api/v1/emergencies/' + id + '/status?status=' + status, {
+            method: 'PATCH',
+            headers: { 'Authorization': 'Basic ' + auth }
+        })
+        .then(res => { if (!res.ok) alert('Error al actualizar estado'); })
+        .catch(() => alert('Error de conexión'));
+    }
+</script>
+</body>
+</html>
